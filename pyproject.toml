@@ -1,0 +1,41 @@
+[tool.pytest.ini_options]
+testpaths = [
+  "packages/shared/tests",
+  "packages/config/tests",
+  "packages/parser/tests",
+  "packages/indexer/tests",
+  "packages/graph/tests",
+  "packages/retrieval/tests",
+  "packages/ai/tests",
+  "packages/git/tests",
+  "apps/api/tests",
+  "apps/cli/tests",
+  "tests",
+]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = [
+  "packages/shared/src",
+  "packages/config/src",
+  "packages/parser/src",
+  "packages/indexer/src",
+  "packages/graph/src",
+  "packages/retrieval/src",
+  "packages/ai/src",
+  "packages/git/src",
+  "apps/api/src",
+  "apps/cli/src",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+namespace_packages = true
+explicit_package_bases = true
