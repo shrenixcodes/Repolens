@@ -124,10 +124,37 @@ file as part of the commit that completes the item.
 - [x] CORS added to the API with an explicit origin allowlist (found missing during Milestone 15-17 manual browser testing)
 
 ## Milestone 20 — CI, documentation, release prep
-- [ ] GitHub Actions (lint, type-check, test, build)
-- [ ] README, docs/*, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, LICENSE
-- [ ] Example fixture repositories (python-project, typescript-project, fullstack-project)
-- [ ] Final end-to-end manual verification pass
+- [x] GitHub Actions (lint, type-check, test, build) -- `.github/workflows/ci.yml`; exact command sequences validated locally before committing
+- [x] README, docs/*, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CHANGELOG, LICENSE
+- [x] Example fixture repositories (python-project, typescript-project, fullstack-project) -- each indexed, searched, asked, and impact-analyzed for real while writing their READMEs
+- [x] Final end-to-end manual verification pass -- see below
+
+### Final verification pass (what was actually run, not just claimed)
+- `pytest` across all 9 Python packages: 213 passed, 2 skipped (symlinks unsupported in this sandbox), 0 failed.
+- `ruff check packages apps`: clean. `mypy` across all 10 Python source trees: clean.
+- `npm run lint` / `npm run build` for `apps/web`: clean.
+- Live end-to-end smoke tests actually executed (not just unit-tested) against this repository and the three example repos: `repolens init/index/status/search/ask/impact/history` via the real installed CLI; the FastAPI app run with `python -m repolens_api` and exercised via real HTTP requests (register/index/search/ask/impact/graph/files/git history); the Next.js dashboard run with `npm run dev` and driven through a real browser for every screen.
+- Found and fixed two real bugs this way that unit tests alone hadn't caught: a missing CORS policy on the API (blocked every browser fetch from the web app) and a CSS layout bug that suppressed the "parent needs a size" warning path in the Graph page.
+- `docker build`/`docker compose up` were **not** executed -- see Milestone 18's note. Treat Docker as reviewed-but-unverified until someone runs it for real.
+- The web Graph screen's edges were verified structurally correct (API response shape, props passed to React Flow) but not visually confirmed compositing, because this sandbox's browser pane has no display compositor -- see Milestone 17's note.
 
 ## Notes / known limitations (kept up to date)
-- (filled in as work proceeds)
+- Cross-file relationship resolution (`repolens_graph.resolve`) is a
+  conservative, name-based heuristic: absolute Python imports are resolved
+  assuming the import path mirrors the repo-relative directory layout,
+  which misses `src/`-layout packages installed in editable mode (their
+  import path and repo-relative path differ by the `src/` prefix). Relative
+  imports and JS/TS relative imports are unaffected. Ambiguous names are
+  left `unresolved` rather than guessed at -- this is a precision/recall
+  tradeoff made deliberately in favor of precision.
+- Impact analysis does not detect API routes or frontend components.
+- `LLMProvider.stream()` is implemented as a single-chunk wrapper around
+  `generate()` for every current provider -- no real token streaming yet.
+- No authentication on the API or web UI (by design, for local/single-user
+  use -- see docs/security.md).
+- Docker images were authored and statically validated but not built/run
+  end-to-end in this environment (Docker Desktop's backend never finished
+  starting here).
+- The web Graph screen's edge rendering was verified structurally
+  (correct data reaching React Flow) but not visually, in this
+  environment's compositor-less browser pane.
