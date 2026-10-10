@@ -26,11 +26,11 @@ file as part of the commit that completes the item.
 - [x] Path-traversal safety tests for discovery
 
 ## Milestone 3 — Parser architecture & language support
-- [ ] `packages/parser` pluggable parser registry
-- [ ] Python parser (stdlib `ast`)
-- [ ] JavaScript/TypeScript/TSX parser (tree-sitter)
-- [ ] Parser coverage reporting (what was/wasn't understood)
-- [ ] Unit tests against fixture snippets
+- [x] `packages/parser` pluggable parser registry
+- [x] Python parser (stdlib `ast`)
+- [x] JavaScript/TypeScript/TSX parser (tree-sitter)
+- [x] Parser coverage reporting (what was/wasn't understood)
+- [x] Unit tests against fixture snippets
 
 ## Milestone 4 — Symbol storage & relationship extraction
 - [ ] SQLite schema + migrations (files, symbols, relationships, chunks, commits)

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repolens-parser"
+version = "0.1.0"
+description = "Pluggable AST/tree-sitter based source parsing and symbol extraction for RepoLens."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "repolens-shared",
+  "tree-sitter>=0.23",
+  "tree-sitter-python>=0.23",
+  "tree-sitter-javascript>=0.23",
+  "tree-sitter-typescript>=0.23",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repolens_parser"]
