@@ -12,12 +12,12 @@ file as part of the commit that completes the item.
 - [x] Write and commit this plan
 
 ## Milestone 1 — Foundation
-- [ ] Root project layout (`apps/`, `packages/`, `docs/`, `examples/`, `tests/`, `.github/`)
-- [ ] `.gitignore`, `.editorconfig`
-- [ ] `packages/shared` — common types/exceptions/path-safety utilities
-- [ ] `packages/config` — layered configuration (defaults, YAML file, env vars)
-- [ ] Root `pyproject.toml` workspace wiring + dev dependency set (pytest, ruff, mypy)
-- [ ] Logging setup with secret redaction
+- [x] Root project layout (`apps/`, `packages/`, `docs/`, `examples/`, `tests/`, `.github/`)
+- [x] `.gitignore`, `.editorconfig`
+- [x] `packages/shared` — common types/exceptions/path-safety utilities
+- [x] `packages/config` — layered configuration (defaults, YAML file, env vars)
+- [x] Root `pyproject.toml` workspace wiring + dev dependency set (pytest, ruff, mypy)
+- [x] Logging setup with secret redaction
 
 ## Milestone 2 — CLI foundation & repository discovery
 - [ ] `apps/cli` skeleton (`repolens --help`, `--version`)
