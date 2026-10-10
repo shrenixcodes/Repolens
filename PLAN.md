@@ -79,9 +79,10 @@ file as part of the commit that completes the item.
 - [x] Repository content fenced as data in the LLM prompt (prompt-injection containment)
 
 ## Milestone 12 — Impact analysis
-- [ ] Direct/transitive dependents via graph traversal
-- [ ] Related-test detection heuristic
-- [ ] `repolens impact` command
+- [x] Direct/transitive dependents via graph traversal
+- [x] Related-test detection heuristic (path-convention based: test_*.py, *_test.py, *.test.ts(x), *.spec.ts(x), tests/ dirs)
+- [x] `repolens impact` command
+- [x] Known limitation: route/frontend-component detection not implemented; absolute-import resolution assumes import path mirrors repo-relative layout (misses src/-layout offsets)
 
 ## Milestone 13 — Git intelligence
 - [ ] `packages/git` wrapper around local git (subprocess, no shell=True)

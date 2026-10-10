@@ -11,7 +11,7 @@ import yaml
 
 from repolens_cli.doctor import run_checks
 from repolens_config import load_config
-from repolens_graph import build_graph
+from repolens_graph import analyze_impact, build_graph
 from repolens_indexer import get_status, index_db_path, run_index, search_lexical
 from repolens_indexer.db import IndexStore
 from repolens_retrieval import answer_question
@@ -319,6 +319,65 @@ def ask(question: str, repo_path: Path, as_json: bool) -> None:
         for c in result.citations:
             suffix = f" ({c.symbol_name})" if c.symbol_name else ""
             click.echo(f"  {c.location}{suffix}")
+
+
+@cli.command()
+@click.argument("target")
+@_REPO_OPTION
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
+def impact(target: str, repo_path: Path, as_json: bool) -> None:
+    """Analyze what might be affected by changing TARGET (a file path, or path::symbol)."""
+    repo_path = repo_path.resolve()
+    config = load_config(repo_path)
+    db_path = index_db_path(repo_path, config)
+    if not db_path.exists():
+        click.echo("This repository has not been indexed yet. Run 'repolens index' first.")
+        raise SystemExit(1)
+
+    store = IndexStore.open(db_path)
+    try:
+        repo_graph = build_graph(store)
+        report = analyze_impact(repo_graph, target)
+    finally:
+        store.close()
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                {
+                    "target": report.target,
+                    "target_found": report.target_found,
+                    "direct_dependents": list(report.direct_dependents),
+                    "transitive_dependents": list(report.transitive_dependents),
+                    "related_tests": list(report.related_tests),
+                    "limitations": list(report.limitations),
+                },
+                indent=2,
+            )
+        )
+        return
+
+    if not report.target_found:
+        click.echo(f"'{target}' was not found in the index.")
+        raise SystemExit(1)
+
+    click.echo("Impact analysis")
+    click.echo("")
+    click.echo(f"Target: {report.target}")
+    click.echo("")
+    click.echo(f"Direct dependents: {len(report.direct_dependents)}")
+    for d in report.direct_dependents:
+        click.echo(f"  {d}")
+    click.echo("")
+    click.echo(f"Transitive dependents: {len(report.transitive_dependents)}")
+    click.echo("")
+    click.echo(f"Related tests: {len(report.related_tests)}")
+    for t in report.related_tests:
+        click.echo(f"  {t}")
+    click.echo("")
+    click.echo("Limitations:")
+    for limitation in report.limitations:
+        click.echo(f"  - {limitation}")
 
 
 if __name__ == "__main__":

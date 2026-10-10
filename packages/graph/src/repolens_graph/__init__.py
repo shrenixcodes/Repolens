@@ -2,6 +2,7 @@
 
 from repolens_graph.builder import RepoGraph, build_graph
 from repolens_graph.ids import file_node_id, is_file_node, is_symbol_node, symbol_node_id
+from repolens_graph.impact import ImpactReport, analyze_impact, is_test_path
 from repolens_graph.queries import (
     dependencies_of,
     dependents_of,
@@ -13,7 +14,9 @@ from repolens_graph.stats import FileImportance, file_fan_in_out, important_file
 
 __all__ = [
     "FileImportance",
+    "ImpactReport",
     "RepoGraph",
+    "analyze_impact",
     "build_graph",
     "dependencies_of",
     "dependents_of",
@@ -23,6 +26,7 @@ __all__ = [
     "important_files",
     "is_file_node",
     "is_symbol_node",
+    "is_test_path",
     "symbol_node_id",
     "transitive_dependencies",
     "transitive_dependents",
