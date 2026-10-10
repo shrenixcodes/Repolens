@@ -11,8 +11,10 @@ import yaml
 
 from repolens_cli.doctor import run_checks
 from repolens_config import load_config
+from repolens_graph import build_graph
 from repolens_indexer import get_status, index_db_path, run_index, search_lexical
 from repolens_indexer.db import IndexStore
+from repolens_retrieval import answer_question
 from repolens_shared.logging import configure_logging
 
 try:
@@ -100,6 +102,14 @@ def init(repo_path: Path) -> None:
     click.echo("Run 'repolens index' next.")
 
 
+def _build_embedding_provider_if_enabled(config):  # type: ignore[no-untyped-def]
+    if not config.indexing.enable_embeddings:
+        return None
+    from repolens_ai import build_embedding_provider
+
+    return build_embedding_provider(config.embedding)
+
+
 @cli.command()
 @_REPO_OPTION
 @click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
@@ -109,11 +119,10 @@ def index(repo_path: Path, as_json: bool) -> None:
     config = load_config(repo_path)
 
     embedding_backend = None
-    if config.indexing.enable_embeddings:
-        from repolens_ai import build_embedding_provider
+    provider = _build_embedding_provider_if_enabled(config)
+    if provider is not None:
         from repolens_indexer import EmbeddingBackend
 
-        provider = build_embedding_provider(config.embedding)
         embedding_backend = EmbeddingBackend(
             provider=provider.name, model=provider.model, embed_batch=provider.embed_batch
         )
@@ -242,6 +251,74 @@ def search(query: str, repo_path: Path, limit: int, as_json: bool) -> None:
         for line in r.snippet.splitlines()[:3]:
             click.echo(f"    {line}")
         click.echo("")
+
+
+@cli.command()
+@click.argument("question")
+@_REPO_OPTION
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
+def ask(question: str, repo_path: Path, as_json: bool) -> None:
+    """Ask a natural-language question about the repository, with citations."""
+    repo_path = repo_path.resolve()
+    config = load_config(repo_path)
+    db_path = index_db_path(repo_path, config)
+    if not db_path.exists():
+        click.echo("This repository has not been indexed yet. Run 'repolens index' first.")
+        raise SystemExit(1)
+
+    from repolens_ai import build_llm_provider
+
+    store = IndexStore.open(db_path)
+    try:
+        repo_graph = build_graph(store)
+        llm = build_llm_provider(config.llm)
+        embedding_provider = _build_embedding_provider_if_enabled(config)
+
+        result = answer_question(
+            store,
+            repo_graph,
+            question,
+            generate_fn=lambda prompt, system: llm.generate(prompt, system=system),
+            embed_fn=embedding_provider.embed if embedding_provider else None,
+            embedding_provider=embedding_provider.name if embedding_provider else None,
+            embedding_model=embedding_provider.model if embedding_provider else None,
+        )
+    finally:
+        store.close()
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                {
+                    "answer": result.answer,
+                    "grounded": result.grounded,
+                    "citations": [
+                        {
+                            "path": c.location.path,
+                            "start_line": c.location.start_line,
+                            "end_line": c.location.end_line,
+                            "symbol": c.symbol_name,
+                            "excerpt": c.excerpt,
+                        }
+                        for c in result.citations
+                    ],
+                    "related_symbols": [
+                        {"path": r.file_path, "qualified_name": r.qualified_name, "relation": r.relation}
+                        for r in result.related_symbols
+                    ],
+                },
+                indent=2,
+            )
+        )
+        return
+
+    click.echo(result.answer)
+    if result.citations:
+        click.echo("")
+        click.echo("Sources:")
+        for c in result.citations:
+            suffix = f" ({c.symbol_name})" if c.symbol_name else ""
+            click.echo(f"  {c.location}{suffix}")
 
 
 if __name__ == "__main__":

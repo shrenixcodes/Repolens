@@ -69,13 +69,14 @@ file as part of the commit that completes the item.
 - [x] Context budget management + dedup (`assemble_context`, merge-by-location dedup in `hybrid_search`)
 
 ## Milestone 10 — AI provider interfaces & repository Q&A
-- [ ] LLM provider interface, mock/Ollama/OpenAI-compatible implementations
-- [ ] Provider selection via config/env, local-first default (mock when unset)
-- [ ] `repolens ask` wired to retrieval + generation
+- [x] LLM provider interface, mock/Ollama/OpenAI-compatible implementations
+- [x] Provider selection via config/env, local-first default (mock when unset)
+- [x] `repolens ask` wired to retrieval + generation
 
 ## Milestone 11 — Source-grounded citations
-- [ ] Citation objects attached to every answer segment
-- [ ] "insufficient evidence" fallback path (no fabrication)
+- [x] Citation objects attached to every answer (`answer_question` -> `AnswerResult.citations`, derived only from real retrieval results, never parsed from LLM free text)
+- [x] "insufficient evidence" fallback path (no fabrication) -- `NO_EVIDENCE_MESSAGE` when retrieval finds nothing
+- [x] Repository content fenced as data in the LLM prompt (prompt-injection containment)
 
 ## Milestone 12 — Impact analysis
 - [ ] Direct/transitive dependents via graph traversal
