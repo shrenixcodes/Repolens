@@ -20,10 +20,10 @@ file as part of the commit that completes the item.
 - [x] Logging setup with secret redaction
 
 ## Milestone 2 — CLI foundation & repository discovery
-- [ ] `apps/cli` skeleton (`repolens --help`, `--version`)
-- [ ] `repolens doctor` (environment diagnostics)
-- [ ] `packages/indexer` file discovery + ignore rules (`.gitignore` + defaults)
-- [ ] Path-traversal safety tests for discovery
+- [x] `apps/cli` skeleton (`repolens --help`, `--version`)
+- [x] `repolens doctor` (environment diagnostics)
+- [x] `packages/indexer` file discovery + ignore rules (`.gitignore` + defaults)
+- [x] Path-traversal safety tests for discovery
 
 ## Milestone 3 — Parser architecture & language support
 - [ ] `packages/parser` pluggable parser registry

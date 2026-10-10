@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repolens-cli"
+version = "0.1.0"
+description = "The repolens command-line interface."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "repolens-shared",
+  "repolens-config",
+  "repolens-indexer",
+  "click>=8.1,<9",
+]
+
+[project.scripts]
+repolens = "repolens_cli.main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repolens_cli"]
