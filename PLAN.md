@@ -33,10 +33,10 @@ file as part of the commit that completes the item.
 - [x] Unit tests against fixture snippets
 
 ## Milestone 4 — Symbol storage & relationship extraction
-- [ ] SQLite schema + migrations (files, symbols, relationships, chunks, commits)
-- [ ] Symbol persistence layer
-- [ ] Import/call/inheritance relationship extraction (Python + JS/TS)
-- [ ] Confidence/resolution-status field on relationships
+- [x] SQLite schema + migrations (files, symbols, relationships, imports; chunks/commits land in M8/M13)
+- [x] Symbol persistence layer (`IndexStore`)
+- [x] Import/call/inheritance relationship extraction (Python + JS/TS) -- done in Milestone 3's parsers
+- [x] Confidence/resolution-status field on relationships
 
 ## Milestone 5 — Graph operations
 - [ ] `packages/graph` build graph from stored symbols/relationships (networkx)

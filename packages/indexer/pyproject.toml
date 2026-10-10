@@ -12,7 +12,9 @@ license = { text = "MIT" }
 dependencies = [
   "repolens-shared",
   "repolens-config",
+  "repolens-parser",
   "pathspec>=1.0",
+  "SQLAlchemy>=2.0,<3",
 ]
 
 [tool.hatch.build.targets.wheel]
