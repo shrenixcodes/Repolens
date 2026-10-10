@@ -7,8 +7,12 @@ from importlib import metadata
 from pathlib import Path
 
 import click
+import yaml
 
 from repolens_cli.doctor import run_checks
+from repolens_config import load_config
+from repolens_indexer import get_status, index_db_path, run_index
+from repolens_indexer.db import IndexStore
 from repolens_shared.logging import configure_logging
 
 try:
@@ -65,6 +69,116 @@ def doctor(repo_path: Path, as_json: bool) -> None:
 
     if any(r.status == "fail" for r in results):
         raise SystemExit(1)
+
+
+_REPO_OPTION = click.option(
+    "--repo",
+    "repo_path",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=Path.cwd(),
+    show_default="current directory",
+    help="Repository to operate on.",
+)
+
+
+@cli.command()
+@_REPO_OPTION
+def init(repo_path: Path) -> None:
+    """Create a repolens.yaml with default, fully-offline settings."""
+    repo_path = repo_path.resolve()
+    config_path = repo_path / "repolens.yaml"
+    if config_path.exists():
+        click.echo(f"{config_path} already exists -- leaving it untouched.")
+        return
+
+    config = load_config(repo_path, env={})
+    config_path.write_text(
+        yaml.safe_dump(config.model_dump(), sort_keys=False), encoding="utf-8"
+    )
+    (repo_path / ".repolens").mkdir(exist_ok=True)
+    click.echo(f"Wrote {config_path}")
+    click.echo("Run 'repolens index' next.")
+
+
+@cli.command()
+@_REPO_OPTION
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
+def index(repo_path: Path, as_json: bool) -> None:
+    """Scan the repository and (re)build its local index."""
+    repo_path = repo_path.resolve()
+    config = load_config(repo_path)
+    result = run_index(repo_path, config)
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                {
+                    "files_scanned": result.files_scanned,
+                    "files_indexed": result.files_indexed,
+                    "files_unchanged": result.files_unchanged,
+                    "files_removed": result.files_removed,
+                    "files_failed": result.files_failed,
+                    "errors": [{"path": p, "message": m} for p, m in result.errors],
+                },
+                indent=2,
+            )
+        )
+    else:
+        click.echo(
+            f"Scanned {result.files_scanned} files: "
+            f"{result.files_indexed} indexed, {result.files_unchanged} unchanged, "
+            f"{result.files_removed} removed, {result.files_failed} failed."
+        )
+        for path, message in result.errors:
+            click.echo(f"  [WARN] {path}: {message}")
+
+    if result.files_failed:
+        raise SystemExit(1)
+
+
+@cli.command()
+@_REPO_OPTION
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
+def status(repo_path: Path, as_json: bool) -> None:
+    """Show statistics about the repository's current index."""
+    repo_path = repo_path.resolve()
+    config = load_config(repo_path)
+    db_path = index_db_path(repo_path, config)
+    if not db_path.exists():
+        click.echo("This repository has not been indexed yet. Run 'repolens index' first.")
+        raise SystemExit(1)
+
+    store = IndexStore.open(db_path)
+    try:
+        s = get_status(store)
+    finally:
+        store.close()
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                {
+                    "total_files": s.total_files,
+                    "total_symbols": s.total_symbols,
+                    "total_relationships": s.total_relationships,
+                    "resolved_relationships": s.resolved_relationships,
+                    "files_by_language": s.files_by_language,
+                    "symbols_by_kind": s.symbols_by_kind,
+                    "last_indexed_at": s.last_indexed_at,
+                },
+                indent=2,
+            )
+        )
+    else:
+        click.echo(f"Files:          {s.total_files}")
+        click.echo(f"Symbols:        {s.total_symbols}")
+        click.echo(
+            f"Relationships:  {s.total_relationships} ({s.resolved_relationships} resolved)"
+        )
+        click.echo(f"Last indexed:   {s.last_indexed_at}")
+        click.echo("Languages:")
+        for language, count in sorted(s.files_by_language.items()):
+            click.echo(f"  {language}: {count} files")
 
 
 if __name__ == "__main__":

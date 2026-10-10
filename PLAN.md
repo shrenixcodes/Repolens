@@ -44,10 +44,11 @@ file as part of the commit that completes the item.
 - [x] Graph stats (important modules, fan-in/fan-out)
 
 ## Milestone 6 — Incremental indexing
-- [ ] Content hashing + change detection
-- [ ] `repolens index` CLI command wired to real pipeline
-- [ ] Re-index only changed files; delete-stale-row handling
-- [ ] `repolens status` reporting
+- [x] Content hashing + change detection
+- [x] `repolens index` CLI command wired to real pipeline
+- [x] Re-index only changed files; delete-stale-row handling
+- [x] `repolens status` reporting
+- [x] `repolens init` (bonus: writes a default repolens.yaml)
 
 ## Milestone 7 — Lexical search
 - [ ] SQLite FTS5 (or LIKE fallback) over symbols/chunks
