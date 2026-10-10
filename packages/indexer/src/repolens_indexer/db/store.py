@@ -13,10 +13,12 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sqlalchemy import Engine, delete, insert, select, update
+from sqlalchemy import Engine, delete, insert, select, text, update
 
+from repolens_indexer.chunking import ChunkDraft
 from repolens_indexer.db.engine import ensure_schema, get_engine
 from repolens_indexer.db.schema import (
+    chunks_table,
     files_table,
     imports_table,
     relationships_table,
@@ -280,3 +282,56 @@ class IndexStore:
             ]
             if rows:
                 conn.execute(insert(imports_table), rows)
+
+    # -- chunks (full-text search) ----------------------------------------
+
+    def replace_file_chunks(self, file_id: int, file_path: str, chunks: Iterable[ChunkDraft]) -> None:
+        with self._engine.begin() as conn:
+            conn.execute(delete(chunks_table).where(chunks_table.c.file_id == file_id))
+            conn.execute(text("DELETE FROM chunks_fts WHERE file_path = :path"), {"path": file_path})
+
+            for chunk in chunks:
+                result = conn.execute(
+                    insert(chunks_table).values(
+                        file_id=file_id,
+                        symbol_qualified_name=chunk.symbol_qualified_name,
+                        start_line=chunk.start_line,
+                        end_line=chunk.end_line,
+                        content=chunk.content,
+                    )
+                )
+                inserted_pk = result.inserted_primary_key
+                assert inserted_pk is not None
+                chunk_id = int(inserted_pk[0])
+                conn.execute(
+                    text(
+                        "INSERT INTO chunks_fts "
+                        "(content, chunk_id, file_path, symbol_qualified_name, start_line, end_line) "
+                        "VALUES (:content, :chunk_id, :file_path, :symbol_qualified_name, "
+                        ":start_line, :end_line)"
+                    ),
+                    {
+                        "content": chunk.content,
+                        "chunk_id": chunk_id,
+                        "file_path": file_path,
+                        "symbol_qualified_name": chunk.symbol_qualified_name,
+                        "start_line": chunk.start_line,
+                        "end_line": chunk.end_line,
+                    },
+                )
+
+    def search_chunks_fts(self, fts_query: str, *, limit: int = 20) -> list[dict]:
+        """Run a raw FTS5 MATCH query. See `repolens_indexer.search` for the
+        higher-level, query-sanitizing entry point -- this is intentionally
+        low-level so the FTS syntax stays contained to this module."""
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                text(
+                    "SELECT chunk_id, file_path, symbol_qualified_name, start_line, end_line, "
+                    "content, bm25(chunks_fts) AS rank "
+                    "FROM chunks_fts WHERE chunks_fts MATCH :query "
+                    "ORDER BY rank LIMIT :limit"
+                ),
+                {"query": fts_query, "limit": limit},
+            ).mappings()
+            return [dict(row) for row in rows]

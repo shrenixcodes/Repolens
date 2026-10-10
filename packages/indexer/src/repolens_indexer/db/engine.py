@@ -20,6 +20,16 @@ _MigrationFn = Callable[[Engine], None]
 
 def _migration_0_initial_schema(engine: Engine) -> None:
     metadata.create_all(engine)
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5("
+                "content, chunk_id UNINDEXED, file_path UNINDEXED, "
+                "symbol_qualified_name UNINDEXED, start_line UNINDEXED, end_line UNINDEXED, "
+                "tokenize='porter unicode61'"
+                ")"
+            )
+        )
 
 
 _MIGRATIONS: list[_MigrationFn] = [

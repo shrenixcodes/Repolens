@@ -51,8 +51,9 @@ file as part of the commit that completes the item.
 - [x] `repolens init` (bonus: writes a default repolens.yaml)
 
 ## Milestone 7 — Lexical search
-- [ ] SQLite FTS5 (or LIKE fallback) over symbols/chunks
-- [ ] `repolens search` command
+- [x] Chunk generation (one per top-level symbol, or whole-file for non-code files)
+- [x] SQLite FTS5 full-text index over chunk content, with a query-sanitizing layer
+- [x] `repolens search` command
 
 ## Milestone 8 — Embeddings & semantic search (optional layer)
 - [ ] `packages/ai` embedding provider interface

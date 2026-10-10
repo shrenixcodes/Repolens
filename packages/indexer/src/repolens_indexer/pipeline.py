@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from repolens_config.models import RepoLensConfig
+from repolens_indexer.chunking import build_chunks
 from repolens_indexer.db import IndexStore
 from repolens_indexer.discovery import discover_files
 from repolens_parser.registry import ParserRegistry, build_default_registry
@@ -59,17 +60,24 @@ def run_index(
                 result.files_unchanged += 1
                 continue
 
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                # Binary file: index its existence but not its content.
+                store.upsert_file(
+                    path=discovered_file.relative_path,
+                    language=None,
+                    content_hash=new_hash,
+                    size_bytes=discovered_file.size_bytes,
+                )
+                result.files_indexed += 1
+                continue
+
             parser = registry.get_for_path(discovered_file.relative_path)
             language = parser.language if parser else None
 
             symbols = relationships = imports = ()
             if parser is not None:
-                try:
-                    text = raw.decode("utf-8")
-                except UnicodeDecodeError as exc:
-                    result.files_failed += 1
-                    result.errors.append((discovered_file.relative_path, f"not valid UTF-8: {exc}"))
-                    continue
                 parse_result = parser.parse(discovered_file.relative_path, text)
                 symbols, relationships, imports = (
                     parse_result.symbols,
@@ -93,6 +101,9 @@ def run_index(
             store.replace_file_symbols(file_id, symbols)
             store.replace_file_relationships(file_id, relationships)
             store.replace_file_imports(file_id, imports)
+            store.replace_file_chunks(
+                file_id, discovered_file.relative_path, build_chunks(text, symbols)
+            )
             result.files_indexed += 1
 
         known_paths = {f.path for f in store.list_files()}

@@ -11,7 +11,7 @@ import yaml
 
 from repolens_cli.doctor import run_checks
 from repolens_config import load_config
-from repolens_indexer import get_status, index_db_path, run_index
+from repolens_indexer import get_status, index_db_path, run_index, search_lexical
 from repolens_indexer.db import IndexStore
 from repolens_shared.logging import configure_logging
 
@@ -179,6 +179,58 @@ def status(repo_path: Path, as_json: bool) -> None:
         click.echo("Languages:")
         for language, count in sorted(s.files_by_language.items()):
             click.echo(f"  {language}: {count} files")
+
+
+@cli.command()
+@click.argument("query")
+@_REPO_OPTION
+@click.option("--limit", default=10, show_default=True, help="Maximum number of results.")
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
+def search(query: str, repo_path: Path, limit: int, as_json: bool) -> None:
+    """Lexically search the repository's indexed source for QUERY."""
+    repo_path = repo_path.resolve()
+    config = load_config(repo_path)
+    db_path = index_db_path(repo_path, config)
+    if not db_path.exists():
+        click.echo("This repository has not been indexed yet. Run 'repolens index' first.")
+        raise SystemExit(1)
+
+    store = IndexStore.open(db_path)
+    try:
+        results = search_lexical(store, query, limit=limit)
+    finally:
+        store.close()
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                [
+                    {
+                        "file_path": r.file_path,
+                        "symbol": r.symbol_qualified_name,
+                        "start_line": r.start_line,
+                        "end_line": r.end_line,
+                        "score": r.score,
+                        "snippet": r.snippet,
+                    }
+                    for r in results
+                ],
+                indent=2,
+            )
+        )
+        return
+
+    if not results:
+        click.echo("No matches found.")
+        return
+
+    for r in results:
+        location = f"{r.file_path}:{r.start_line}-{r.end_line}"
+        symbol_suffix = f" ({r.symbol_qualified_name})" if r.symbol_qualified_name else ""
+        click.echo(f"{location}{symbol_suffix}")
+        for line in r.snippet.splitlines()[:3]:
+            click.echo(f"    {line}")
+        click.echo("")
 
 
 if __name__ == "__main__":

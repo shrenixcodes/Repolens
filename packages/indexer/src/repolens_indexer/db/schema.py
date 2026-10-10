@@ -84,4 +84,18 @@ imports_table = Table(
     UniqueConstraint("file_id", "module", "start_line", name="uq_import_location"),
 )
 
+chunks_table = Table(
+    "chunks",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("file_id", Integer, ForeignKey("files.id", ondelete="CASCADE"), nullable=False),
+    Column("symbol_qualified_name", String, nullable=True),
+    Column("start_line", Integer, nullable=False),
+    Column("end_line", Integer, nullable=False),
+    Column("content", Text, nullable=False),
+)
+"""Retrievable units of source text: one per top-level symbol, or one for the
+whole file when it has none (e.g. markdown, config). `repolens_ai`/
+`repolens_retrieval` (Milestone 8/9) key embeddings off `chunks.id`."""
+
 CURRENT_SCHEMA_VERSION = 1
