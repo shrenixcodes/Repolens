@@ -64,9 +64,9 @@ file as part of the commit that completes the item.
 - [x] Pipeline wiring: `indexing.enable_embeddings` + `repolens index` computes/stores embeddings
 
 ## Milestone 9 — Hybrid retrieval
-- [ ] `packages/retrieval` combine lexical + semantic + structural signals
-- [ ] Graph expansion around candidate symbols
-- [ ] Context budget management + dedup
+- [x] `packages/retrieval` combine lexical + semantic + structural signals
+- [x] Graph expansion around candidate symbols (`expand_with_graph`, one hop)
+- [x] Context budget management + dedup (`assemble_context`, merge-by-location dedup in `hybrid_search`)
 
 ## Milestone 10 — AI provider interfaces & repository Q&A
 - [ ] LLM provider interface, mock/Ollama/OpenAI-compatible implementations

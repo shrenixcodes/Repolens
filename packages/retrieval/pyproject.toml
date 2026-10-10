@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repolens-retrieval"
+version = "0.1.0"
+description = "Hybrid (lexical + semantic + structural) retrieval and context assembly for RepoLens."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "repolens-shared",
+  "repolens-indexer",
+  "repolens-graph",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repolens_retrieval"]
