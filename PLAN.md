@@ -111,8 +111,9 @@ file as part of the commit that completes the item.
 - [~] Edge *visual* compositing not confirmed in this sandbox (no display compositor available); data flow and edge count verified correct via DOM/props inspection -- recommend a real-browser smoke test
 
 ## Milestone 18 — Docker & local deployment
-- [ ] Dockerfiles (api, web) + docker-compose.yml
-- [ ] Loopback-only defaults documented
+- [x] Dockerfiles (api, web) + docker-compose.yml
+- [x] Loopback-only defaults documented (docs/security.md, docker-compose.yml comments)
+- [~] `docker build`/`docker compose up` NOT executed in this environment -- Docker Desktop's backend would not finish starting (likely no nested virtualization available here). Verified instead via: (1) `docker compose config` successfully validates the compose YAML, (2) the exact pip install sequence the API Dockerfile uses was run for real in a throwaway venv and succeeded, (3) `next build` with `output: "standalone"` was run for real and produces the file layout the web Dockerfile copies. Recommend a real `docker compose up --build` smoke test before release.
 
 ## Milestone 19 — Security hardening
 - [ ] Path traversal tests at every boundary (discovery, API, git)

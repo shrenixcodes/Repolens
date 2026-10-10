@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      # Loopback-only by default: the API is not reachable from the
+      # network, only from this machine. Change to "8000:8000" (and
+      # understand the consequences -- see docs/security.md) to expose it.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Repositories you want to index must live under /workspace *inside*
+      # the container -- register them via the web UI using paths like
+      # /workspace/my-project. Mount your actual projects directory here;
+      # this default mounts the current directory for a quick start.
+      - ./:/workspace
+      # Persists the repository registry (~/.repolens/workspaces.json) and
+      # each repository's index database across container restarts.
+      - repolens-data:/home/repolens/.repolens
+    environment:
+      - REPOLENS_LLM_PROVIDER=mock
+      - REPOLENS_EMBEDDING_PROVIDER=mock
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked in at build time -- must be reachable from the browser on
+        # the host, not a Docker-network-internal hostname like "api".
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  repolens-data:
