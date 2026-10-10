@@ -1,9 +1,12 @@
 from pathlib import Path
 
-from repolens_config.models import RepoLensConfig
+import pytest
+
+from repolens_config.models import DatabaseConfig, RepoLensConfig
 from repolens_indexer.db import IndexStore
 from repolens_indexer.pipeline import index_db_path, run_index
 from repolens_indexer.status import get_status
+from repolens_shared.exceptions import PathTraversalError
 
 
 def _write(root: Path, rel: str, content: str) -> Path:
@@ -98,3 +101,11 @@ def test_status_reports_counts(tmp_path: Path) -> None:
     assert status.total_symbols >= 2  # Foo class + bar method
     assert status.files_by_language.get("python") == 2
     assert status.last_indexed_at is not None
+
+
+def test_index_db_path_rejects_traversal_via_malicious_config(tmp_path: Path) -> None:
+    # A repolens.yaml committed to an untrusted repository could try to
+    # point database.path outside the repo -- this must never be honored.
+    config = RepoLensConfig(database=DatabaseConfig(path="../../../../tmp/evil.sqlite3"))
+    with pytest.raises(PathTraversalError):
+        index_db_path(tmp_path, config)

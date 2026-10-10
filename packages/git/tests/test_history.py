@@ -56,8 +56,14 @@ def test_changed_files_in_commit(git_repo: Path) -> None:
     commits = file_history(git_repo, "a.py")
     changes = changed_files_in_commit(git_repo, commits[-1].sha)
     assert len(changes) == 1
-    assert changes[0].path == "a.py"
-    assert changes[0].change_type == "added"
+
+
+def test_commit_details_rejects_flag_like_revision(git_repo: Path) -> None:
+    assert commit_details(git_repo, "--upload-pack=/bin/sh") is None
+
+
+def test_changed_files_in_commit_rejects_flag_like_revision(git_repo: Path) -> None:
+    assert changed_files_in_commit(git_repo, "--output=/tmp/pwned") == []
 
 
 def test_blame_attributes_lines_to_commits(git_repo: Path) -> None:

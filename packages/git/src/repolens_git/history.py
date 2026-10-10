@@ -29,6 +29,17 @@ def _safe_relative(repo_root: Path, file_path: str) -> str:
     return safe_relative_path(repo_root, resolved)
 
 
+def _reject_flag_like(revision: str) -> None:
+    """Raise if ``revision`` could be interpreted as a git option.
+
+    A valid commit sha/ref never starts with "-"; refusing that shape
+    before it reaches ``git show`` prevents argument injection from
+    whatever supplied the revision string.
+    """
+    if not revision or revision.startswith("-"):
+        raise GitError(f"Invalid revision: {revision!r}")
+
+
 def _parse_log_line(line: str) -> Commit:
     sha, author_name, author_email, date, subject = line.split(_FIELD_SEP, 4)
     return Commit(
@@ -52,6 +63,11 @@ def file_history(repo_root: Path, file_path: str, *, limit: int = 20) -> list[Co
 
 def commit_details(repo_root: Path, sha: str) -> Commit | None:
     try:
+        # `git show <rev>` has no "--" form that keeps `<rev>` as a revision
+        # (putting "--" before it reinterprets it as a pathspec instead), so
+        # argument injection is prevented by rejecting flag-shaped input
+        # up front instead.
+        _reject_flag_like(sha)
         output = run_git(repo_root, ["show", "-s", f"--format={_LOG_FORMAT}", sha])
     except GitError:
         return None
@@ -61,6 +77,7 @@ def commit_details(repo_root: Path, sha: str) -> Commit | None:
 
 def changed_files_in_commit(repo_root: Path, sha: str) -> list[FileChange]:
     try:
+        _reject_flag_like(sha)
         output = run_git(repo_root, ["show", "--name-status", "--format=", sha])
     except GitError:
         return []
