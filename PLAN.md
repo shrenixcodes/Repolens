@@ -97,16 +97,18 @@ file as part of the commit that completes the item.
 - [x] Bind to 127.0.0.1 by default (`repolens-api` script / `python -m repolens_api`)
 
 ## Milestone 15 — Web dashboard & explorer
-- [ ] `apps/web` Next.js + TS + Tailwind scaffold
-- [ ] Dashboard screen (index status, stats) wired to API
-- [ ] Explorer screen (file/symbol tree) wired to API
+- [x] `apps/web` Next.js + TS + Tailwind scaffold
+- [x] Dashboard screen (index status, stats) wired to API
+- [x] Explorer screen (file/symbol tree) wired to API
 
 ## Milestone 16 — Search & Q&A interfaces
-- [ ] Search screen wired to API
-- [ ] Ask/chat screen wired to API with citations displayed
+- [x] Search screen wired to API
+- [x] Ask/chat screen wired to API with citations displayed
 
 ## Milestone 17 — Interactive graph
-- [ ] React Flow dependency graph screen with filtering/zoom/search
+- [x] React Flow dependency graph screen with filtering/zoom/search, click-through to Impact
+- [x] Fixed a real CORS bug found during manual testing (API had no CORS policy)
+- [~] Edge *visual* compositing not confirmed in this sandbox (no display compositor available); data flow and edge count verified correct via DOM/props inspection -- recommend a real-browser smoke test
 
 ## Milestone 18 — Docker & local deployment
 - [ ] Dockerfiles (api, web) + docker-compose.yml
