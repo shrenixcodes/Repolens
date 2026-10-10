@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repolens-graph"
+version = "0.1.0"
+description = "Repository dependency/call graph construction and queries for RepoLens."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "repolens-shared",
+  "repolens-indexer",
+  "networkx>=3.2,<4",
+  "numpy>=1.26",
+  "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+test = ["repolens-parser"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repolens_graph"]

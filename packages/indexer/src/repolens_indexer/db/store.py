@@ -249,7 +249,7 @@ class IndexStore:
         )
 
     def update_relationship_resolution(
-        self, relationship_id: int, *, target_file_id: int, target_symbol_id: int
+        self, relationship_id: int, *, target_file_id: int, target_symbol_id: int | None = None
     ) -> None:
         with self._engine.begin() as conn:
             conn.execute(

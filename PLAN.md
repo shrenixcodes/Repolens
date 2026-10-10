@@ -39,9 +39,9 @@ file as part of the commit that completes the item.
 - [x] Confidence/resolution-status field on relationships
 
 ## Milestone 5 — Graph operations
-- [ ] `packages/graph` build graph from stored symbols/relationships (networkx)
-- [ ] Forward/reverse dependency queries
-- [ ] Graph stats (important modules, fan-in/fan-out)
+- [x] `packages/graph` build graph from stored symbols/relationships (networkx)
+- [x] Forward/reverse dependency queries
+- [x] Graph stats (important modules, fan-in/fan-out)
 
 ## Milestone 6 — Incremental indexing
 - [ ] Content hashing + change detection
