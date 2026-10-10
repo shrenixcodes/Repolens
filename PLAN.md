@@ -56,11 +56,12 @@ file as part of the commit that completes the item.
 - [x] `repolens search` command
 
 ## Milestone 8 — Embeddings & semantic search (optional layer)
-- [ ] `packages/ai` embedding provider interface
-- [ ] Mock provider (deterministic, offline, default for tests)
-- [ ] Ollama embedding provider
-- [ ] OpenAI-compatible embedding provider
-- [ ] Vector storage (SQLite blob + brute-force cosine; documented upgrade path)
+- [x] `packages/ai` embedding provider interface
+- [x] Mock provider (deterministic, offline, default for tests)
+- [x] Ollama embedding provider
+- [x] OpenAI-compatible embedding provider
+- [x] Vector storage (SQLite blob + brute-force cosine; documented upgrade path)
+- [x] Pipeline wiring: `indexing.enable_embeddings` + `repolens index` computes/stores embeddings
 
 ## Milestone 9 — Hybrid retrieval
 - [ ] `packages/retrieval` combine lexical + semantic + structural signals

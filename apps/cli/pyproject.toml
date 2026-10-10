@@ -13,6 +13,7 @@ dependencies = [
   "repolens-shared",
   "repolens-config",
   "repolens-indexer",
+  "repolens-ai",
   "click>=8.1,<9",
   "PyYAML>=6.0,<7",
 ]

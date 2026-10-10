@@ -7,6 +7,7 @@ index (and, via `ON DELETE CASCADE`, their symbols/relationships/imports).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -17,6 +18,21 @@ from repolens_indexer.discovery import discover_files
 from repolens_parser.registry import ParserRegistry, build_default_registry
 from repolens_shared.hashing import content_hash
 from repolens_shared.paths import resolve_within_root
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingBackend:
+    """Glue between the pipeline and an embedding provider.
+
+    Kept as a plain callable + two strings (not an import of
+    `repolens_ai.EmbeddingProvider`) so `repolens_indexer` never depends on
+    `repolens_ai` -- the CLI/API layer builds this from whichever provider
+    is configured and hands it in.
+    """
+
+    provider: str
+    model: str
+    embed_batch: Callable[[list[str]], list[list[float]]]
 
 
 @dataclass
@@ -34,7 +50,11 @@ def index_db_path(repo_root: Path, config: RepoLensConfig) -> Path:
 
 
 def run_index(
-    repo_root: Path, config: RepoLensConfig, *, registry: ParserRegistry | None = None
+    repo_root: Path,
+    config: RepoLensConfig,
+    *,
+    registry: ParserRegistry | None = None,
+    embedding_backend: EmbeddingBackend | None = None,
 ) -> IndexResult:
     repo_root = repo_root.resolve()
     registry = registry or build_default_registry()
@@ -101,9 +121,24 @@ def run_index(
             store.replace_file_symbols(file_id, symbols)
             store.replace_file_relationships(file_id, relationships)
             store.replace_file_imports(file_id, imports)
-            store.replace_file_chunks(
-                file_id, discovered_file.relative_path, build_chunks(text, symbols)
-            )
+            chunks = build_chunks(text, symbols)
+            chunk_ids = store.replace_file_chunks(file_id, discovered_file.relative_path, chunks)
+
+            if embedding_backend is not None and config.indexing.enable_embeddings and chunks:
+                try:
+                    vectors = embedding_backend.embed_batch([c.content for c in chunks])
+                    for chunk_id, vector in zip(chunk_ids, vectors, strict=True):
+                        store.replace_chunk_embedding(
+                            chunk_id,
+                            provider=embedding_backend.provider,
+                            model=embedding_backend.model,
+                            vector=vector,
+                        )
+                except Exception as exc:  # noqa: BLE001 -- provider failures must not abort indexing
+                    result.errors.append(
+                        (discovered_file.relative_path, f"embedding generation failed: {exc}")
+                    )
+
             result.files_indexed += 1
 
         known_paths = {f.path for f in store.list_files()}

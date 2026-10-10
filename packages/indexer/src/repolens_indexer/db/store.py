@@ -7,6 +7,7 @@ schema details stay in one place.
 
 from __future__ import annotations
 
+import array
 import json
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -19,6 +20,7 @@ from repolens_indexer.chunking import ChunkDraft
 from repolens_indexer.db.engine import ensure_schema, get_engine
 from repolens_indexer.db.schema import (
     chunks_table,
+    embeddings_table,
     files_table,
     imports_table,
     relationships_table,
@@ -51,6 +53,17 @@ class SymbolRow:
     parent_qualified_name: str | None
     decorators: tuple[str, ...]
     is_exported: bool
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingRow:
+    chunk_id: int
+    file_path: str
+    symbol_qualified_name: str | None
+    start_line: int
+    end_line: int
+    content: str
+    vector: list[float]
 
 
 @dataclass(frozen=True, slots=True)
@@ -285,7 +298,13 @@ class IndexStore:
 
     # -- chunks (full-text search) ----------------------------------------
 
-    def replace_file_chunks(self, file_id: int, file_path: str, chunks: Iterable[ChunkDraft]) -> None:
+    def replace_file_chunks(
+        self, file_id: int, file_path: str, chunks: Iterable[ChunkDraft]
+    ) -> list[int]:
+        """Replace all chunks for ``file_id``, returning the new chunk ids in
+        the same order as ``chunks`` (so callers can embed chunk[i] and
+        store the vector against chunk_ids[i])."""
+        chunk_ids: list[int] = []
         with self._engine.begin() as conn:
             conn.execute(delete(chunks_table).where(chunks_table.c.file_id == file_id))
             conn.execute(text("DELETE FROM chunks_fts WHERE file_path = :path"), {"path": file_path})
@@ -303,6 +322,7 @@ class IndexStore:
                 inserted_pk = result.inserted_primary_key
                 assert inserted_pk is not None
                 chunk_id = int(inserted_pk[0])
+                chunk_ids.append(chunk_id)
                 conn.execute(
                     text(
                         "INSERT INTO chunks_fts "
@@ -319,6 +339,7 @@ class IndexStore:
                         "end_line": chunk.end_line,
                     },
                 )
+        return chunk_ids
 
     def search_chunks_fts(self, fts_query: str, *, limit: int = 20) -> list[dict]:
         """Run a raw FTS5 MATCH query. See `repolens_indexer.search` for the
@@ -335,3 +356,59 @@ class IndexStore:
                 {"query": fts_query, "limit": limit},
             ).mappings()
             return [dict(row) for row in rows]
+
+    # -- embeddings (semantic search) -------------------------------------
+
+    def replace_chunk_embedding(
+        self, chunk_id: int, *, provider: str, model: str, vector: list[float]
+    ) -> None:
+        packed = array.array("f", vector).tobytes()
+        with self._engine.begin() as conn:
+            conn.execute(
+                delete(embeddings_table).where(
+                    (embeddings_table.c.chunk_id == chunk_id)
+                    & (embeddings_table.c.provider == provider)
+                    & (embeddings_table.c.model == model)
+                )
+            )
+            conn.execute(
+                insert(embeddings_table).values(
+                    chunk_id=chunk_id,
+                    provider=provider,
+                    model=model,
+                    dimensions=len(vector),
+                    vector=packed,
+                )
+            )
+
+    def iter_embeddings(self, *, provider: str, model: str) -> list[EmbeddingRow]:
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                select(
+                    embeddings_table.c.chunk_id,
+                    embeddings_table.c.vector,
+                    chunks_table.c.symbol_qualified_name,
+                    chunks_table.c.start_line,
+                    chunks_table.c.end_line,
+                    chunks_table.c.content,
+                    files_table.c.path,
+                )
+                .select_from(embeddings_table)
+                .join(chunks_table, chunks_table.c.id == embeddings_table.c.chunk_id)
+                .join(files_table, files_table.c.id == chunks_table.c.file_id)
+                .where(embeddings_table.c.provider == provider)
+                .where(embeddings_table.c.model == model)
+            ).fetchall()
+
+        return [
+            EmbeddingRow(
+                chunk_id=row.chunk_id,
+                file_path=row.path,
+                symbol_qualified_name=row.symbol_qualified_name,
+                start_line=row.start_line,
+                end_line=row.end_line,
+                content=row.content,
+                vector=array.array("f", row.vector).tolist(),
+            )
+            for row in rows
+        ]

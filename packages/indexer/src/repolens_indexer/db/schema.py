@@ -14,6 +14,7 @@ from sqlalchemy import (
     Column,
     ForeignKey,
     Integer,
+    LargeBinary,
     MetaData,
     String,
     Table,
@@ -95,7 +96,25 @@ chunks_table = Table(
     Column("content", Text, nullable=False),
 )
 """Retrievable units of source text: one per top-level symbol, or one for the
-whole file when it has none (e.g. markdown, config). `repolens_ai`/
-`repolens_retrieval` (Milestone 8/9) key embeddings off `chunks.id`."""
+whole file when it has none (e.g. markdown, config). Embeddings are keyed
+off `chunks.id`."""
+
+embeddings_table = Table(
+    "embeddings",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("chunk_id", Integer, ForeignKey("chunks.id", ondelete="CASCADE"), nullable=False),
+    Column("provider", String, nullable=False),
+    Column("model", String, nullable=False),
+    Column("dimensions", Integer, nullable=False),
+    Column("vector", LargeBinary, nullable=False),  # packed float32 array
+    UniqueConstraint("chunk_id", "provider", "model", name="uq_embedding_chunk_provider_model"),
+)
+"""One embedding vector per (chunk, provider, model) -- brute-force cosine
+similarity over this table is `repolens_indexer.embeddings.semantic_search`.
+Documented upgrade path: swap the brute-force scan for a dedicated vector
+index (e.g. sqlite-vec, or an external store) once corpus size warrants it;
+callers only depend on `semantic_search`'s function signature, not on how
+it's implemented."""
 
 CURRENT_SCHEMA_VERSION = 1

@@ -107,7 +107,18 @@ def index(repo_path: Path, as_json: bool) -> None:
     """Scan the repository and (re)build its local index."""
     repo_path = repo_path.resolve()
     config = load_config(repo_path)
-    result = run_index(repo_path, config)
+
+    embedding_backend = None
+    if config.indexing.enable_embeddings:
+        from repolens_ai import build_embedding_provider
+        from repolens_indexer import EmbeddingBackend
+
+        provider = build_embedding_provider(config.embedding)
+        embedding_backend = EmbeddingBackend(
+            provider=provider.name, model=provider.model, embed_batch=provider.embed_batch
+        )
+
+    result = run_index(repo_path, config, embedding_backend=embedding_backend)
 
     if as_json:
         click.echo(
