@@ -32,7 +32,11 @@ src = [
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
-ignore = ["E501"]
+# E501: line length is handled by the formatter's wrapping, not a hard error.
+# B008: FastAPI's Depends()-as-default-argument is the documented, required
+# pattern for dependency injection -- not the "mutable default" footgun B008
+# otherwise guards against.
+ignore = ["E501", "B008"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -91,10 +91,10 @@ file as part of the commit that completes the item.
 - [x] Change-reason answering limited to actual commit evidence (surfaces real commit subjects only; never infers intent beyond the message text)
 
 ## Milestone 14 — API completion
-- [ ] `apps/api` FastAPI app, Pydantic models, error handling
-- [ ] Repository/index/search/ask/graph/symbol/impact/git endpoints
-- [ ] Input validation + path-traversal guards at API boundary
-- [ ] Bind to 127.0.0.1 by default
+- [x] `apps/api` FastAPI app, Pydantic models, error handling
+- [x] Repository/index/status/search/ask/graph/files/symbols/impact/git endpoints
+- [x] Input validation + path-traversal guards at API boundary
+- [x] Bind to 127.0.0.1 by default (`repolens-api` script / `python -m repolens_api`)
 
 ## Milestone 15 — Web dashboard & explorer
 - [ ] `apps/web` Next.js + TS + Tailwind scaffold
