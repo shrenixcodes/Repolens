@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install packages (editable, dependency order)
+        run: |
+          pip install --upgrade pip
+          pip install \
+            -e packages/shared \
+            -e packages/config \
+            -e packages/parser \
+            -e packages/indexer \
+            -e packages/graph \
+            -e packages/retrieval \
+            -e packages/ai \
+            -e packages/git \
+            -e apps/cli \
+            -e "apps/api[test]"
+          pip install pytest ruff mypy
+
+      - name: Configure git identity for history/blame tests
+        run: |
+          git config --global user.name "CI"
+          git config --global user.email "ci@example.com"
+
+      - name: Lint (ruff)
+        run: ruff check packages apps
+
+      - name: Type check (mypy)
+        run: |
+          mypy packages/shared/src packages/config/src packages/parser/src \
+               packages/indexer/src packages/graph/src packages/retrieval/src \
+               packages/ai/src packages/git/src apps/cli/src apps/api/src
+
+      - name: Test (pytest)
+        run: pytest -v
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build

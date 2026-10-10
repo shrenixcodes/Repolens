@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest an enhancement that isn't language or provider support (see those templates for those).
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that RepoLens doesn't support today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Fit with project principles
+      description: RepoLens is local-first and prefers deterministic analysis over LLM calls wherever possible.
+      options:
+        - label: This can work fully offline (no cloud API required), or is clearly marked as an optional AI-powered feature.

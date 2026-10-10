@@ -1,0 +1,29 @@
+name: Language support request
+description: Ask for (or propose) support for a new source language.
+labels: ["language-support"]
+body:
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      placeholder: Go, Rust, Java, C#, ...
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this language?
+      description: What repositories/use cases need it?
+    validations:
+      required: true
+  - type: textarea
+    id: parser
+    attributes:
+      label: Parser availability
+      description: Is there a tree-sitter grammar for this language (https://tree-sitter.github.io/tree-sitter/#parsers)? Link it if so.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to implement this (see CONTRIBUTING.md's "Adding language support" section).

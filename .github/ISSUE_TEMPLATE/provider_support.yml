@@ -1,0 +1,34 @@
+name: Model provider support request
+description: Ask for (or propose) support for a new LLM/embedding provider.
+labels: ["provider-support"]
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Provider
+      placeholder: Anthropic, Groq, a specific self-hosted server, ...
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Provider type
+      options:
+        - LLM (text generation)
+        - Embeddings
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: API shape
+      description: Is it OpenAI-chat-completions-compatible already (then `openai_compatible` may already work -- try it first)? If not, link the API docs.
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to implement this (see CONTRIBUTING.md's "Adding a model provider" section).
