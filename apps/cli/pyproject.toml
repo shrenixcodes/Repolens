@@ -16,6 +16,7 @@ dependencies = [
   "repolens-graph",
   "repolens-retrieval",
   "repolens-ai",
+  "repolens-git",
   "click>=8.1,<9",
   "PyYAML>=6.0,<7",
 ]

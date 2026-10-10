@@ -85,10 +85,10 @@ file as part of the commit that completes the item.
 - [x] Known limitation: route/frontend-component detection not implemented; absolute-import resolution assumes import path mirrors repo-relative layout (misses src/-layout offsets)
 
 ## Milestone 13 — Git intelligence
-- [ ] `packages/git` wrapper around local git (subprocess, no shell=True)
-- [ ] File history, blame, commit lookup
-- [ ] `repolens history` command
-- [ ] Change-reason answering limited to actual commit evidence
+- [x] `packages/git` wrapper around local git (subprocess, no shell=True)
+- [x] File history, blame, commit lookup
+- [x] `repolens history` command
+- [x] Change-reason answering limited to actual commit evidence (surfaces real commit subjects only; never infers intent beyond the message text)
 
 ## Milestone 14 — API completion
 - [ ] `apps/api` FastAPI app, Pydantic models, error handling

@@ -11,10 +11,13 @@ import yaml
 
 from repolens_cli.doctor import run_checks
 from repolens_config import load_config
+from repolens_git import file_history
+from repolens_git.runner import is_git_repository
 from repolens_graph import analyze_impact, build_graph
 from repolens_indexer import get_status, index_db_path, run_index, search_lexical
 from repolens_indexer.db import IndexStore
 from repolens_retrieval import answer_question
+from repolens_shared.exceptions import GitError, PathTraversalError
 from repolens_shared.logging import configure_logging
 
 try:
@@ -378,6 +381,55 @@ def impact(target: str, repo_path: Path, as_json: bool) -> None:
     click.echo("Limitations:")
     for limitation in report.limitations:
         click.echo(f"  - {limitation}")
+
+
+@cli.command()
+@click.argument("file_path")
+@_REPO_OPTION
+@click.option("--limit", default=20, show_default=True, help="Maximum number of commits.")
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON output.")
+def history(file_path: str, repo_path: Path, limit: int, as_json: bool) -> None:
+    """Show real Git commit history for FILE_PATH -- never invented, exactly what git reports."""
+    repo_path = repo_path.resolve()
+    if not is_git_repository(repo_path):
+        click.echo(f"{repo_path} is not a Git repository.")
+        raise SystemExit(1)
+
+    try:
+        commits = file_history(repo_path, file_path, limit=limit)
+    except PathTraversalError as exc:
+        click.echo(f"Invalid path: {exc}")
+        raise SystemExit(1) from exc
+    except GitError as exc:
+        click.echo(f"Git error: {exc}")
+        raise SystemExit(1) from exc
+
+    if as_json:
+        click.echo(
+            json.dumps(
+                [
+                    {
+                        "sha": c.sha,
+                        "author_name": c.author_name,
+                        "author_email": c.author_email,
+                        "date": c.date,
+                        "subject": c.subject,
+                    }
+                    for c in commits
+                ],
+                indent=2,
+            )
+        )
+        return
+
+    if not commits:
+        click.echo(f"No commit history found for {file_path}.")
+        return
+
+    for c in commits:
+        click.echo(f"{c.sha[:8]}  {c.date}  {c.author_name}")
+        click.echo(f"    {c.subject}")
+        click.echo("")
 
 
 if __name__ == "__main__":
