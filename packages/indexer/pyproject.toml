@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repolens-indexer"
+version = "0.1.0"
+description = "Repository file discovery, ignore-rule handling, hashing, and incremental indexing for RepoLens."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "repolens-shared",
+  "repolens-config",
+  "pathspec>=1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repolens_indexer"]
