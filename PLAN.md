@@ -116,9 +116,12 @@ file as part of the commit that completes the item.
 - [~] `docker build`/`docker compose up` NOT executed in this environment -- Docker Desktop's backend would not finish starting (likely no nested virtualization available here). Verified instead via: (1) `docker compose config` successfully validates the compose YAML, (2) the exact pip install sequence the API Dockerfile uses was run for real in a throwaway venv and succeeded, (3) `next build` with `output: "standalone"` was run for real and produces the file layout the web Dockerfile copies. Recommend a real `docker compose up --build` smoke test before release.
 
 ## Milestone 19 — Security hardening
-- [ ] Path traversal tests at every boundary (discovery, API, git)
-- [ ] Secret-file exclusion defaults
-- [ ] Prompt-injection containment (repo content fenced as data, never instructions)
+- [x] Path traversal tests at every boundary (discovery, API files endpoint, git history/blame, index db path) -- all enforced via `resolve_within_root`
+- [x] Secret-file exclusion defaults (hard-coded, cannot be overridden from config)
+- [x] Prompt-injection containment (repo content fenced as data, never instructions; citations always derived from real retrieval, never parsed from LLM free text)
+- [x] Full-repo review pass: no `shell=True`, no `eval`/`exec`, no unsafe `yaml.load`, no `pickle`, no archive extraction, no `dangerouslySetInnerHTML`
+- [x] Found and fixed a real gap during review: `git show` revision argument injection (see git log) -- not reachable via any wired endpoint today, closed defensively anyway
+- [x] CORS added to the API with an explicit origin allowlist (found missing during Milestone 15-17 manual browser testing)
 
 ## Milestone 20 — CI, documentation, release prep
 - [ ] GitHub Actions (lint, type-check, test, build)
